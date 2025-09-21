@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from 'openai';
-import { aj } from "../arcjet/route";
+import OpenAI from "openai";
 import { auth, currentUser } from "@clerk/nextjs/server";
 
-export const openai = new OpenAI({
-  baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+const openai = new OpenAI({
+  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
@@ -27,10 +26,12 @@ Once all required information is collected, generate and return a **strict JSON 
 resp:'Text Resp',
 ui:'budget/groupSize/tripDuration/final)'
 }
-`
-const Final_PROMPT = `const FINAL_PROMPT = Generate Travel Plan with given details, give me Hotels options list with HotelName, Hotel address, Price, hotel image url, geo coordinates, rating, descriptions and  suggest itinerary with placeName, Place Details, Place Image Url, Geo Coordinates,Place address, ticket Pricing, Time travel each of the location , with each day plan with best time to visit in JSON format.
- Output Schema:
- {
+`;
+
+const Final_PROMPT = `
+Generate Travel Plan with given details, give me Hotels options list with HotelName, Hotel address, Price, hotel image url, geo coordinates, rating, descriptions and suggest itinerary with placeName, Place Details, Place Image Url, Geo Coordinates, Place address, ticket Pricing, Time travel each of the location, with each day plan with best time to visit in JSON format.
+Output Schema:
+{
   "trip_plan": {
     "destination": "string",
     "duration": "string",
@@ -75,42 +76,27 @@ const Final_PROMPT = `const FINAL_PROMPT = Generate Travel Plan with given detai
     ]
   }
 }
-`
+`;
 
 export async function POST(req: NextRequest) {
-    const {messages, isFinal} = await req.json();
-    /*const user=await currentUser();
-    const {has} = await auth();
-    const hasPremiumAccess = has({ plan: 'monthly' })
-    console.log("hasPremiumAccess", hasPremiumAccess)
-    const decision = await aj.protect(req, { userId:user?.primaryEmailAddress?.emailAddress??'', requested: isFinal?5:0});
+  const { messages, isFinal } = await req.json();
 
-    //@ts-ignore
-    if(decision?.reason?.remaining==0 && !hasPremiumAccess){
-      return NextResponse.json({
-        resp: 'No Free Credits Remaining',
-        ui: 'limit'
-      })
-    }*/
-     
-    try{
-       const completion = await openai.chat.completions.create({
-       model: 'gemini-2.0-flash',
-       response_format:{type:'json_object'},
-       messages: [
-           {
-               role:'system',
-               content: isFinal?Final_PROMPT:PROMPT
-           },
-           ...messages
-       ],
-      });
-        console.log(completion.choices[0].message);
-        const message=completion.choices[0].message;
-        return NextResponse.json(JSON.parse(message.content??''));
-    }
-    catch(e)
-    {
-        return NextResponse.json(e);
-    }
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gemini-2.0-flash",
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: isFinal ? Final_PROMPT : PROMPT,
+        },
+        ...messages,
+      ],
+    });
+
+    const message = completion.choices[0].message;
+    return NextResponse.json(JSON.parse(message.content ?? "{}"));
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message });
+  }
 }
