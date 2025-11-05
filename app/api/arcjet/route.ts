@@ -1,7 +1,7 @@
 import arcjet, { tokenBucket } from "@arcjet/next";
 import { NextResponse } from "next/server";
 
-// ⚡ Create Arcjet instance (local, NOT exported)
+//  Create Arcjet instance (local, NOT exported)
 const aj = arcjet({
   key: process.env.ARCJET_KEY!, // Load securely from environment
   rules: [
@@ -16,7 +16,7 @@ const aj = arcjet({
 });
 
 export async function GET(req: Request) {
-  // ⚠️ In production, replace this with your actual authenticated user ID
+  //  In production, replace this with your actual authenticated user ID
   const userId = "user123";
 
   try {
